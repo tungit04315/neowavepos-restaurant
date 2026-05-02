@@ -6,12 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEO WAVE POS v4.7 — Quản Trị Nâng Cao</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="shortcut icon" href="logo-neo-wave-pos-100-100-background1.png" type="image/x-icon">
+  <link rel="shortcut icon" href="logo-neo-wave-pos-100-100.png" type="image/x-icon">
   <link
     href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -1962,6 +1963,20 @@
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
+    }
+
+    /* ── SHARE PANEL SLIDE-UP ────────────────────────────── */
+    #invoice-share-panel > div:last-child {
+      animation: share-slide-up .3s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes share-slide-up {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);   opacity: 1; }
+    }
+
+    /* ── INVOICE PREVIEW MODAL PRINT BUTTON ─────────────── */
+    #invoice-preview-modal .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(34,197,94,0.45);
     }
 
     #v4-print-area {
@@ -5363,33 +5378,67 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════ -->
-  <!--  MODAL: XEM TRƯỚC HÓA ĐƠN (v4 NEW)                   -->
+  <!--  MODAL: XEM TRƯỚC HÓA ĐƠN (v9 NÂNG CẤP)             -->
   <!-- ═══════════════════════════════════════════════════════ -->
   <div id="invoice-preview-modal" class="modal-overlay">
-    <div class="modal-box" style="width:400px;max-height:92vh">
-      <div class="flex items-center justify-between mb-5">
+    <div class="modal-box" style="width:440px;max-height:96vh;padding:0;overflow:hidden;display:flex;flex-direction:column">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4" style="border-bottom:1px solid var(--border);flex-shrink:0">
         <h3 class="font-display font-semibold text-lg" style="color:var(--text-primary)">
-          <i data-lucide="file-text" class="w-5 h-5 inline mr-2" style="color:var(--accent-400)"></i>Xem Trước Hóa Đơn
+          <i data-lucide="receipt" class="w-5 h-5 inline mr-2" style="color:var(--accent-400)"></i>Xem Trước Hóa Đơn
         </h3>
-        <button class="btn-secondary p-2" onclick="closeModal('invoice-preview-modal')"><i data-lucide="x"
-            class="w-4 h-4"></i></button>
+        <button class="btn-secondary p-2" onclick="closeModal('invoice-preview-modal')"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <!-- Preview area -->
-      <div id="invoice-preview-content" class="rounded-xl overflow-hidden mb-5"
-        style="background:white;color:#111;font-family:'DM Sans',monospace;font-size:13px;max-height:55vh;overflow-y:auto">
-        <!-- JS will inject here -->
+      <!-- Preview area (scrollable) -->
+      <div style="flex:1;overflow-y:auto;padding:16px;background:var(--surface-2)">
+        <div id="invoice-preview-content" class="rounded-xl overflow-hidden"
+          style="background:white;color:#111;font-size:13px;box-shadow:0 4px 24px rgba(0,0,0,0.18)">
+          <!-- JS will inject here -->
+        </div>
       </div>
 
-      <!-- Actions -->
-      <div class="flex gap-3">
-        <button onclick="V4Print.printFromPreview()" class="btn-primary flex-1 justify-center" style="padding:12px">
-          <i data-lucide="printer" class="w-4 h-4"></i> In Hóa Đơn
+      <!-- Actions bar -->
+      <div style="flex-shrink:0;padding:14px 16px;border-top:1px solid var(--border);background:var(--surface-1)">
+        <button onclick="V4Print.printFromPreview()" class="btn-primary w-full justify-center mb-3" style="padding:13px;font-size:15px">
+          <i data-lucide="printer" class="w-5 h-5"></i> In Bill (In Hoa Don)
         </button>
-        <button onclick="closeModal('invoice-preview-modal')" class="btn-secondary" style="padding:12px 20px">
-          <i data-lucide="x" class="w-4 h-4"></i> Đóng
+        <div class="flex gap-2">
+          <button onclick="V4Print.saveAsImage()" class="btn-secondary flex-1 justify-center" style="padding:10px;font-size:13px;color:#60a5fa;border-color:rgba(96,165,250,0.3)">
+            <i data-lucide="image" class="w-4 h-4"></i> Luu Anh
+          </button>
+          <button onclick="V4Print.shareInvoice()" class="btn-secondary flex-1 justify-center" style="padding:10px;font-size:13px;color:#a78bfa;border-color:rgba(167,139,250,0.3)">
+            <i data-lucide="share-2" class="w-4 h-4"></i> Chia Se
+          </button>
+          <button onclick="V4Print.shareZalo()" class="btn-secondary flex-1 justify-center" style="padding:10px;font-size:13px;color:#22d3ee;border-color:rgba(34,211,238,0.3)">
+            <i data-lucide="message-circle" class="w-4 h-4"></i> Zalo
+          </button>
+        </div>
+        <button onclick="closeModal('invoice-preview-modal')" class="btn-secondary w-full justify-center mt-2" style="padding:8px;font-size:13px;opacity:0.7">Dong</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share panel popup -->
+  <div id="invoice-share-panel" style="display:none;position:fixed;inset:0;z-index:500;align-items:flex-end;justify-content:center;flex-direction:column">
+    <div onclick="document.getElementById('invoice-share-panel').style.display='none'" style="position:absolute;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px)"></div>
+    <div style="position:relative;background:var(--surface-1);border-radius:24px 24px 0 0;width:100%;max-width:480px;margin:0 auto;padding:24px;border:1px solid var(--border-md)">
+      <h4 class="font-display font-semibold mb-4" style="color:var(--text-primary);font-size:15px">Chia Se Hoa Don</h4>
+      <div class="flex gap-3 flex-wrap mb-4">
+        <button onclick="V4Print.saveAsImage()" class="flex flex-col items-center gap-1 p-3 rounded-2xl" style="background:var(--surface-2);border:1px solid var(--border);min-width:74px;color:var(--text-secondary)">
+          <span style="font-size:28px">🖼️</span><span style="font-size:11px;font-weight:600">Luu Anh</span>
+        </button>
+        <button onclick="V4Print.copyInvoiceText()" class="flex flex-col items-center gap-1 p-3 rounded-2xl" style="background:var(--surface-2);border:1px solid var(--border);min-width:74px;color:var(--text-secondary)">
+          <span style="font-size:28px">📋</span><span style="font-size:11px;font-weight:600">Sao Chep</span>
+        </button>
+        <button onclick="V4Print.shareZalo()" class="flex flex-col items-center gap-1 p-3 rounded-2xl" style="background:rgba(34,211,238,0.08);border:1px solid rgba(34,211,238,0.2);min-width:74px;color:#22d3ee">
+          <span style="font-size:28px">💬</span><span style="font-size:11px;font-weight:600">Zalo</span>
+        </button>
+        <button onclick="V4Print.shareNative()" class="flex flex-col items-center gap-1 p-3 rounded-2xl" style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);min-width:74px;color:var(--accent-400)">
+          <span style="font-size:28px">📤</span><span style="font-size:11px;font-weight:600">Khac</span>
         </button>
       </div>
+      <button onclick="document.getElementById('invoice-share-panel').style.display='none'" class="btn-secondary w-full justify-center">Dong</button>
     </div>
   </div>
 
@@ -5958,12 +6007,18 @@
       AppStore.logs.unshift(entry);
       if (AppStore.logs.length > 1000) AppStore.logs = AppStore.logs.slice(0, 1000);
       saveLogs();
+      // ── Ghi log lên Firestore ─────────────────────────────────
+      if (db) {
+        try { setDoc(doc(db, 'logs', entry.id), entry).catch(() => {}); } catch (_) { }
+      }
       if (document.querySelector('#page-logs.active')) renderLogs();
     };
 
     window.renderLogs = function () {
       const filter = document.getElementById('log-filter-action')?.value || '';
-      const logs = filter ? AppStore.logs.filter(l => l.action === filter) : AppStore.logs;
+      const search = (document.getElementById('log-filter-search')?.value || '').toLowerCase().trim();
+      let logs = filter ? AppStore.logs.filter(l => l.action === filter) : AppStore.logs;
+      if (search) logs = logs.filter(l => (l.detail || '').toLowerCase().includes(search));
       const container = document.getElementById('logs-container');
       if (!logs.length) {
         container.innerHTML = `<div class="empty-state"><i data-lucide="scroll-text" class="w-10 h-10 mx-auto mb-3 opacity-30"></i><p class="text-sm">Chưa có nhật ký</p></div>`;
@@ -5971,20 +6026,27 @@
       }
       container.innerHTML = logs.slice(0, 200).map(l => {
         const roleInfo = ROLES[l.role] || { label: l.role };
+        // Extract invoice number from detail (e.g. "Hóa đơn #INV-0001 ...")
+        const invMatch = (l.detail || '').match(/(#INV-\d+|HD\d{8}-\d{4})/i);
+        const viewInvBtn = (l.action === 'sale' && invMatch)
+          ? `<button onclick="V4Print.viewInvoiceByNo('${esc(invMatch[0])}')" class="btn-edit" style="font-size:11px;padding:3px 9px;margin-top:4px">
+               <i data-lucide="receipt" class="w-3 h-3"></i> Xem HĐ
+             </button>` : '';
         return `<div class="log-entry">
       <div class="flex-shrink-0 pt-1">
         <span class="log-action-badge ${l.action}">${l.action?.toUpperCase() || 'LOG'}</span>
       </div>
       <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 mb-1">
+        <div class="flex items-center gap-2 mb-1 flex-wrap">
           <span class="text-sm font-medium" style="color:var(--text-primary)">${esc(l.detail)}</span>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
           <span class="text-xs" style="color:var(--text-muted)">${new Date(l.timestamp).toLocaleString('vi-VN')}</span>
           <span class="text-xs" style="color:var(--text-muted)">•</span>
           <span class="text-xs" style="color:var(--text-secondary)">${esc(l.userName)}</span>
           <span class="badge ${ROLES[l.role]?.badge || 'badge-blue'}" style="font-size:10px;padding:2px 6px">${roleInfo.label}</span>
         </div>
+        ${viewInvBtn}
       </div>
     </div>`;
       }).join('');
@@ -6500,13 +6562,18 @@
         });
 
         items.forEach(item => {
-          AppStore.exportHistory.unshift({
+          const expItem = {
             id: 'exp_' + Date.now() + '_' + item.id,
             date: new Date().toISOString(),
             invoiceNo: invNo,
             productId: item.id, productName: item.name,
             qty: item.qty, price: item.price, total: item.price * item.qty, payMethod,
-          });
+          };
+          AppStore.exportHistory.unshift(expItem);
+          // ── Ghi từng dòng lên Firestore ──────────────────────
+          if (db) {
+            try { setDoc(doc(db, 'exportHistory', expItem.id), expItem); } catch (_) { }
+          }
         });
         saveExportHistory();
 
@@ -6530,6 +6597,10 @@
         AppStore.invoices.unshift(invoice);
         if (AppStore.invoices.length > 200) AppStore.invoices = AppStore.invoices.slice(0, 200);
         saveInvoices();
+        // ── Ghi hóa đơn lên Firestore ─────────────────────────
+        if (db) {
+          try { await setDoc(doc(db, 'invoices', invoice.id), invoice); } catch (_) { }
+        }
 
         logAction('sale', `Hóa đơn ${invNo} — ${formatCurrency(total)} — ${payMethod}`);
 
@@ -6622,10 +6693,22 @@
       const history = AppStore.exportHistory;
       const wrapper = document.getElementById('history-table-wrapper');
       if (!history.length) { wrapper.innerHTML = `<div class="empty-state"><p class="text-sm">Chưa có lịch sử xuất kho</p></div>`; return; }
+
+      // Group by invoiceNo to show "Xem HĐ" once per invoice
+      const seenInvoices = new Set();
+
       wrapper.innerHTML = `<table class="data-table">
-    <thead><tr><th>Thời Gian</th><th>Hóa Đơn</th><th>Sản Phẩm</th><th>SL</th><th>Đơn Giá</th><th>Thành Tiền</th><th>TT</th></tr></thead>
+    <thead><tr><th>Thời Gian</th><th>Hóa Đơn</th><th>Sản Phẩm</th><th>SL</th><th>Đơn Giá</th><th>Thành Tiền</th><th>TT</th><th style="text-align:center">Xem HĐ</th></tr></thead>
     <tbody>
-      ${history.slice(0, 100).map(h => `<tr>
+      ${history.slice(0, 100).map(h => {
+        const isFirst = !seenInvoices.has(h.invoiceNo);
+        if (h.invoiceNo) seenInvoices.add(h.invoiceNo);
+        const viewBtn = isFirst && h.invoiceNo
+          ? `<button onclick="V4Print.viewInvoiceByNo('${esc(h.invoiceNo)}')" class="btn-edit" style="font-size:11px;padding:4px 9px;white-space:nowrap">
+               <i data-lucide="receipt" class="w-3 h-3"></i> Xem HĐ
+             </button>`
+          : '';
+        return `<tr>
         <td class="text-xs" style="color:var(--text-muted)">${new Date(h.date).toLocaleString('vi-VN')}</td>
         <td><span class="font-mono text-xs" style="color:var(--accent-400)">${esc(h.invoiceNo)}</span></td>
         <td style="color:var(--text-primary)">${esc(h.productName)}</td>
@@ -6633,7 +6716,9 @@
         <td>${formatCurrency(h.price)}</td>
         <td class="font-medium" style="color:var(--accent-400)">${formatCurrency(h.total)}</td>
         <td><span class="badge ${h.payMethod === 'Tiền mặt' ? 'badge-green' : 'badge-blue'}">${esc(h.payMethod)}</span></td>
-      </tr>`).join('')}
+        <td style="text-align:center">${viewBtn}</td>
+      </tr>`;
+      }).join('')}
     </tbody></table>`;
       lucide.createIcons();
     }
@@ -6643,6 +6728,12 @@
       saveExportHistory();
       renderHistoryTable();
       logAction('delete', 'Xóa toàn bộ lịch sử xuất kho');
+      // ── Xóa toàn bộ exportHistory trên Firestore ─────────────
+      if (db) {
+        getDocs(collection(db, 'exportHistory')).then(snap => {
+          snap.docs.forEach(d => deleteDoc(doc(db, 'exportHistory', d.id)).catch(() => {}));
+        }).catch(() => {});
+      }
       showSuccess('Đã xóa toàn bộ lịch sử xuất kho');
     };
 
@@ -6701,9 +6792,13 @@
         } else if (type === 'invoice') {
           AppStore.invoices = AppStore.invoices.filter(i => i.id !== id);
           saveInvoices(); updateDashboard();
+          // ── Xóa trên Firestore ────────────────────────────────
+          if (db) { try { await deleteDoc(doc(db, 'invoices', id)); } catch (_) { } }
           logAction('delete', `Xóa hóa đơn ID: ${id}`);
           showSuccess('Hóa đơn đã được xóa');
         } else if (type === 'staff') {
+          // ── Xóa trên Firestore (users collection) ─────────────
+          if (db) { try { await deleteDoc(doc(db, 'users', id)); } catch (_) { } }
           AppStore.staff = AppStore.staff.filter(s => s.id !== id);
           saveStaffLocal(); renderStaffTable();
           logAction('delete', `Xóa nhân viên ID: ${id}`);
@@ -6711,6 +6806,13 @@
         } else if (type === 'log') {
           AppStore.logs = [];
           saveLogs(); renderLogs();
+          // ── Xóa toàn bộ logs trên Firestore ──────────────────
+          if (db) {
+            try {
+              const snap = await getDocs(collection(db, 'logs'));
+              snap.docs.forEach(d => deleteDoc(doc(db, 'logs', d.id)).catch(() => {}));
+            } catch (_) { }
+          }
           showSuccess('Đã xóa toàn bộ nhật ký');
         } else if (type === 'import_excel_replace') {
           // Excel import — replace all products
@@ -7533,6 +7635,8 @@
     // ══════════════════════════════════════════════════════════
     let db = null, auth = null, isFirebaseConnected = false;
     let unsubProducts = null, unsubCustomers = null, unsubVouchers = null;
+    let unsubInvoices = null, unsubLogs = null, unsubExportHistory = null;
+    let unsubShifts = null, unsubTables = null, unsubStaff = null;
 
     window._initFirebase = async (config) => {
       try {
@@ -7548,12 +7652,39 @@
         updateFirebaseStatus(true);
         setupListeners();
 
-        // Load staff from Firestore
+        // Load staff từ Firestore (onSnapshot sẽ tiếp quản sau)
         try {
           const staffSnap = await getDocs(collection(db, 'users'));
           AppStore.staff = staffSnap.docs.map(d => ({ id: d.id, ...d.data() }));
           saveStaffLocal();
           if (document.querySelector('#page-staff.active')) renderStaffTable();
+        } catch (e) { }
+
+        // Load invoices ban đầu từ Firestore (onSnapshot sẽ tiếp quản sau)
+        try {
+          const invSnap = await getDocs(query(collection(db, 'invoices'), orderBy('date', 'desc')));
+          if (!invSnap.empty) {
+            AppStore.invoices = invSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            saveInvoices();
+          }
+        } catch (e) { }
+
+        // Load shifts ban đầu từ Firestore
+        try {
+          const shiftSnap = await getDocs(query(collection(db, 'shifts'), orderBy('openedAt', 'desc')));
+          if (!shiftSnap.empty) {
+            const allShifts = shiftSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            localStorage.setItem('sf_shifts_v1', JSON.stringify(allShifts));
+          }
+        } catch (e) { }
+
+        // Load export history ban đầu
+        try {
+          const expSnap = await getDocs(query(collection(db, 'exportHistory'), orderBy('date', 'desc')));
+          if (!expSnap.empty) {
+            AppStore.exportHistory = expSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            saveExportHistory();
+          }
         } catch (e) { }
 
         // Setup vouchers listener
@@ -7573,18 +7704,83 @@
     }
     function setupListeners() {
       if (!db) return;
+
+      // ── Sản phẩm ────────────────────────────────────────────
       if (unsubProducts) unsubProducts();
       unsubProducts = onSnapshot(query(collection(db, 'products'), orderBy('createdAt', 'desc')), snap => {
         AppStore.products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCurrentPage(); updateDashboard();
         window.V4OfflineCache?.warmProducts(AppStore.products);
       });
+
+      // ── Khách hàng ──────────────────────────────────────────
       if (unsubCustomers) unsubCustomers();
       unsubCustomers = onSnapshot(query(collection(db, 'customers'), orderBy('createdAt', 'desc')), snap => {
         AppStore.customers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderCurrentPage(); updateDashboard();
         window.V4OfflineCache?.warmCustomers(AppStore.customers);
       });
+
+      // ── Hóa đơn ─────────────────────────────────────────────
+      if (unsubInvoices) unsubInvoices();
+      unsubInvoices = onSnapshot(query(collection(db, 'invoices'), orderBy('date', 'desc')), snap => {
+        AppStore.invoices = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (AppStore.invoices.length > 500) AppStore.invoices = AppStore.invoices.slice(0, 500);
+        saveInvoices();
+        updateDashboard();
+        if (document.querySelector('#page-reports.active') || document.querySelector('#page-pos.active')) renderCurrentPage();
+      }, () => {});
+
+      // ── Nhật ký ─────────────────────────────────────────────
+      if (unsubLogs) unsubLogs();
+      unsubLogs = onSnapshot(query(collection(db, 'logs'), orderBy('timestamp', 'desc')), snap => {
+        AppStore.logs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (AppStore.logs.length > 1000) AppStore.logs = AppStore.logs.slice(0, 1000);
+        saveLogs();
+        if (document.querySelector('#page-logs.active')) renderLogs();
+      }, () => {});
+
+      // ── Lịch sử kho ─────────────────────────────────────────
+      if (unsubExportHistory) unsubExportHistory();
+      unsubExportHistory = onSnapshot(query(collection(db, 'exportHistory'), orderBy('date', 'desc')), snap => {
+        AppStore.exportHistory = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        saveExportHistory();
+        if (document.querySelector('#page-inventory.active')) renderHistoryTable();
+      }, () => {});
+
+      // ── Nhân viên ────────────────────────────────────────────
+      if (unsubStaff) unsubStaff();
+      unsubStaff = onSnapshot(collection(db, 'users'), snap => {
+        AppStore.staff = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        saveStaffLocal();
+        if (document.querySelector('#page-staff.active')) renderStaffTable();
+      }, () => {});
+
+      // ── Ca làm việc ──────────────────────────────────────────
+      if (unsubShifts) unsubShifts();
+      unsubShifts = onSnapshot(query(collection(db, 'shifts'), orderBy('openedAt', 'desc')), snap => {
+        if (!snap.empty) {
+          const allShifts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          // Lưu vào localStorage để ShiftManager dùng
+          localStorage.setItem('sf_shifts_v1', JSON.stringify(allShifts));
+          if (document.querySelector('#page-shifts.active')) {
+            if (typeof ShiftManager !== 'undefined') ShiftManager.renderHistory();
+          }
+        }
+      }, () => {});
+
+      // ── Sơ đồ bàn ────────────────────────────────────────────
+      if (unsubTables) unsubTables();
+      unsubTables = onSnapshot(doc(db, 'tables', 'state'), snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.tables) {
+            localStorage.setItem('sf_tables_v1', JSON.stringify(data.tables));
+            localStorage.setItem('sf_table_orders_v1', JSON.stringify(data.orders || {}));
+            if (typeof TableMap !== 'undefined') TableMap._loadFromFirebase(data.tables, data.orders || {});
+          }
+        }
+      }, () => {});
     }
 
     window.saveAndConnectFirebase = async () => {
@@ -8229,9 +8425,12 @@
       }
       function saveShifts(arr) {
         localStorage.setItem(KEY, JSON.stringify(arr));
+        // ── Ghi TẤT CẢ ca lên Firestore ─────────────────────────
         if (window.db && window._fbModules) {
-          const { doc, setDoc } = window._fbModules;
-          if (arr[0]) setDoc(doc(window.db, 'shifts', arr[0].id), arr[0]).catch(() => { });
+          const { doc: _doc, setDoc: _setDoc } = window._fbModules;
+          arr.forEach(s => {
+            if (s && s.id) _setDoc(_doc(window.db, 'shifts', s.id), s).catch(() => {});
+          });
         }
       }
       function getCurrent() {
@@ -8240,9 +8439,10 @@
       function setCurrent(shift) {
         if (shift) localStorage.setItem(CUR, JSON.stringify(shift));
         else localStorage.removeItem(CUR);
+        // ── Ghi ca hiện tại lên Firestore ───────────────────────
         if (window.db && window._fbModules && shift) {
-          const { doc, setDoc } = window._fbModules;
-          setDoc(doc(window.db, 'shifts', shift.id), shift).catch(() => { });
+          const { doc: _doc, setDoc: _setDoc } = window._fbModules;
+          _setDoc(_doc(window.db, 'shifts', shift.id), shift).catch(() => {});
         }
       }
 
@@ -8739,85 +8939,152 @@
 
 
     // ══════════════════════════════════════════════════════════
-    //  V4 — PRINT INVOICE
+    //  V9 — PRINT INVOICE (NÂNG CẤP: đầy đủ thông tin + share)
     // ══════════════════════════════════════════════════════════
     window.V4Print = (() => {
 
+      // ── Xây dựng HTML hóa đơn đầy đủ ─────────────────────
       function buildHTML(invoice) {
         const info = window._v4StoreInfo || {};
         const cfg = window._v4InvoiceCfg || {};
         const logo = window._v4LogoB64 || null;
+        const _esc = (s) => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
+        // Logo
         const logoHTML = logo
-          ? `<img src="${logo}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;margin:0 auto 8px;display:block" />`
-          : '';
+          ? `<img src="${logo}" style="width:72px;height:72px;object-fit:cover;border-radius:10px;margin:0 auto 10px;display:block" />`
+          : `<div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px">🏪</div>`;
 
-        const items = (invoice.items || []).map(i => `
-      <tr>
-        <td style="padding:4px 0">${i.name}</td>
-        <td style="text-align:center;padding:4px 0">${i.qty}</td>
-        <td style="text-align:right;padding:4px 0">${formatCurrency(i.price)}</td>
-        <td style="text-align:right;padding:4px 0">${formatCurrency(i.price * i.qty)}</td>
-      </tr>`).join('');
+        // Items (hỗ trợ opts & note từ variant picker)
+        const itemsHTML = (invoice.items || []).map(i => {
+          const optsHtml = i.opts && i.opts.length
+            ? `<div style="font-size:10px;color:#888;margin-top:1px">${_esc(i.opts.join(' · '))}</div>` : '';
+          const noteHtml = i.note
+            ? `<div style="font-size:10px;color:#e07b39;margin-top:1px">📝 ${_esc(i.note)}</div>` : '';
+          return `<tr>
+            <td style="padding:5px 4px 5px 0;vertical-align:top">
+              <div style="font-weight:600;font-size:12px;color:#222">${_esc(i.name)}</div>
+              ${optsHtml}${noteHtml}
+            </td>
+            <td style="text-align:center;padding:5px 4px;vertical-align:top;font-weight:600;white-space:nowrap">${i.qty}</td>
+            <td style="text-align:right;padding:5px 4px;vertical-align:top;white-space:nowrap;color:#555">${formatCurrency(i.price)}</td>
+            <td style="text-align:right;padding:5px 0;vertical-align:top;font-weight:700;white-space:nowrap">${formatCurrency(i.price * i.qty)}</td>
+          </tr>`;
+        }).join('');
 
-        return `
-      <div style="font-family:'DM Sans',monospace;font-size:13px;color:#111;max-width:320px;margin:0 auto;padding:16px">
-        ${logoHTML}
-        <div style="text-align:center;margin-bottom:12px">
-          <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700">${info.name || 'NEO WAVE POS POS'}</div>
-          ${info.address ? `<div style="font-size:11px;color:#666;margin-top:2px">${info.address}</div>` : ''}
-          ${info.phone ? `<div style="font-size:11px;color:#666">${info.phone}</div>` : ''}
-          ${info.slogan ? `<div style="font-size:11px;color:#888;font-style:italic;margin-top:2px">${info.slogan}</div>` : ''}
-          ${cfg.header ? `<div style="font-size:12px;color:#555;margin-top:6px;font-style:italic">${cfg.header}</div>` : ''}
-        </div>
+        // Subtotal / discount / VAT / voucher / loyalty / total
+        const sub = invoice.subtotal || 0;
+        const disc = invoice.discount || 0;
+        const vat = invoice.vatAmount || 0;
+        const voucher = invoice.voucherDiscount || 0;
+        const loyalty = invoice.loyaltyRedeemed || 0;
+        const total = invoice.total || 0;
 
-        <div style="border-top:1px dashed #999;margin:8px 0"></div>
+        let totalsHTML = `<div style="display:flex;justify-content:space-between;color:#555;margin-bottom:3px;font-size:12px">
+          <span>Tạm tính:</span><span>${formatCurrency(sub)}</span></div>`;
+        if (disc > 0) totalsHTML += `<div style="display:flex;justify-content:space-between;color:#e55;margin-bottom:3px;font-size:12px">
+          <span>Giảm giá${invoice.discountValue ? ` (${invoice.discountType==='percent'?invoice.discountValue+'%':formatCurrency(invoice.discountValue)})` : ''}:</span>
+          <span>- ${formatCurrency(disc)}</span></div>`;
+        if (vat > 0) totalsHTML += `<div style="display:flex;justify-content:space-between;color:#e07b39;margin-bottom:3px;font-size:12px">
+          <span>VAT${invoice.vatValue ? ` (${invoice.vatType==='percent'?invoice.vatValue+'%':formatCurrency(invoice.vatValue)})` : ''}:</span>
+          <span>+ ${formatCurrency(vat)}</span></div>`;
+        if (voucher > 0) totalsHTML += `<div style="display:flex;justify-content:space-between;color:#a855f7;margin-bottom:3px;font-size:12px">
+          <span>Voucher${invoice.voucherCode?' ('+_esc(invoice.voucherCode)+')':''}:</span>
+          <span>- ${formatCurrency(voucher)}</span></div>`;
+        if (loyalty > 0) totalsHTML += `<div style="display:flex;justify-content:space-between;color:#f59e0b;margin-bottom:3px;font-size:12px">
+          <span>Điểm tích lũy:</span><span>- ${formatCurrency(loyalty)}</span></div>`;
 
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#666;margin-bottom:8px">
-          <span><strong>${invoice.no}</strong></span>
-          <span>${new Date(invoice.date).toLocaleString('vi-VN')}</span>
-        </div>
-        <div style="font-size:12px;color:#444;margin-bottom:8px">
-          Khách hàng: <strong>${invoice.customerName || 'Khách lẻ'}</strong>
-        </div>
+        // Created by / cashier
+        const cashierLine = invoice.createdBy
+          ? `<div style="font-size:11px;color:#777;margin-top:3px">Thu ngân: ${_esc(invoice.createdBy)}</div>` : '';
+        // Table name
+        const tableLine = invoice.tableName
+          ? `<div style="font-size:11px;color:#555">Bàn: <strong>${_esc(invoice.tableName)}</strong></div>` : '';
+        // Note
+        const noteLine = invoice.note
+          ? `<div style="font-size:11px;color:#e07b39;margin-top:2px">📝 Ghi chú: ${_esc(invoice.note)}</div>` : '';
+        // VAT invoice flag
+        const vatInvLine = invoice.needInvoice
+          ? `<div style="font-size:11px;color:#a855f7;margin-top:2px;font-weight:600">✓ Xuất hóa đơn VAT</div>` : '';
 
-        <div style="border-top:1px dashed #999;margin:8px 0"></div>
+        const dateObj = new Date(invoice.date);
+        const dateStr = dateObj.toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric'});
+        const timeStr = dateObj.toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          <thead>
-            <tr style="color:#666">
-              <th style="text-align:left;padding:4px 0">Sản phẩm</th>
-              <th style="text-align:center;padding:4px 0">SL</th>
-              <th style="text-align:right;padding:4px 0">Đơn giá</th>
-              <th style="text-align:right;padding:4px 0">T.tiền</th>
-            </tr>
-          </thead>
-          <tbody>${items}</tbody>
-        </table>
+        return `<div id="invoice-render-root" style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#111;max-width:340px;margin:0 auto;padding:20px 18px 16px">
 
-        <div style="border-top:1px dashed #999;margin:8px 0"></div>
-
-        <div style="font-size:12px">
-          <div style="display:flex;justify-content:space-between;color:#666;margin-bottom:3px">
-            <span>Tạm tính:</span><span>${formatCurrency(invoice.subtotal)}</span>
+          <!-- HEADER: Logo + Store Info -->
+          ${logoHTML}
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#111;letter-spacing:-0.3px">${_esc(info.name || 'NEO WAVE POS')}</div>
+            ${info.slogan ? `<div style="font-size:11px;color:#888;font-style:italic;margin-top:2px">${_esc(info.slogan)}</div>` : ''}
+            ${info.address ? `<div style="font-size:11px;color:#555;margin-top:4px">📍 ${_esc(info.address)}</div>` : ''}
+            ${info.phone ? `<div style="font-size:11px;color:#555">📞 ${_esc(info.phone)}</div>` : ''}
+            ${info.website ? `<div style="font-size:11px;color:#1d4ed8;text-decoration:underline;margin-top:2px">${_esc(info.website)}</div>` : ''}
+            ${cfg.header ? `<div style="font-size:11px;color:#666;margin-top:6px;border-top:1px dashed #ddd;padding-top:6px;font-style:italic">${_esc(cfg.header)}</div>` : ''}
           </div>
-          ${invoice.discount > 0 ? `<div style="display:flex;justify-content:space-between;color:#e55;margin-bottom:3px">
-            <span>Giảm giá:</span><span>- ${formatCurrency(invoice.discount)}</span>
-          </div>` : ''}
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;margin-top:4px">
-            <span>Tổng cộng:</span><span>${formatCurrency(invoice.total)}</span>
-          </div>
-          <div style="font-size:11px;color:#666;margin-top:4px">
-            Thanh toán: ${invoice.payMethod}
-          </div>
-        </div>
 
-        <div style="border-top:1px dashed #999;margin:10px 0"></div>
+          <!-- Divider -->
+          <div style="border-top:2px dashed #bbb;margin:10px 0"></div>
 
-        ${cfg.footer ? `<div style="text-align:center;font-size:11px;color:#666;margin-bottom:8px;font-style:italic">${cfg.footer}</div>` : ''}
-        ${info.website ? `<div style="text-align:center;font-size:11px;color:#888">${info.website}</div>` : ''}
-        <div style="text-align:center;font-size:10px;color:#aaa;margin-top:8px">In bởi NEO WAVE POS v4</div>
-      </div>`;
+          <!-- Invoice Meta -->
+          <div style="background:#f8f8f8;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div>
+                <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;font-weight:600">Hóa đơn</div>
+                <div style="font-size:16px;font-weight:800;color:#111;font-family:'Sora',sans-serif;margin-top:1px">${_esc(invoice.no)}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:#555;font-weight:600">${dateStr}</div>
+                <div style="font-size:10px;color:#888">${timeStr}</div>
+              </div>
+            </div>
+            <div style="border-top:1px solid #eee;margin-top:8px;padding-top:8px">
+              <div style="font-size:12px;color:#333">Khách hàng: <strong>${_esc(invoice.customerName || 'Khách lẻ')}</strong></div>
+              ${tableLine}
+              <div style="font-size:12px;color:#333;margin-top:2px">Thanh toán: <strong>${_esc(invoice.payMethod || '—')}</strong></div>
+              ${cashierLine}
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div style="border-top:1px dashed #ccc;margin:8px 0"></div>
+
+          <!-- Items Table -->
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr style="background:#f3f4f6;border-radius:6px">
+                <th style="text-align:left;padding:6px 4px 6px 0;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.4px">Món / Sản phẩm</th>
+                <th style="text-align:center;padding:6px 4px;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.4px;width:28px">SL</th>
+                <th style="text-align:right;padding:6px 4px;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.4px">Giá</th>
+                <th style="text-align:right;padding:6px 0;color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.4px">T.tiền</th>
+              </tr>
+            </thead>
+            <tbody style="border-top:1px solid #e5e7eb">${itemsHTML}</tbody>
+          </table>
+
+          <!-- Divider -->
+          <div style="border-top:2px dashed #bbb;margin:10px 0"></div>
+
+          <!-- Totals -->
+          <div style="font-size:12px">
+            ${totalsHTML}
+            <div style="display:flex;justify-content:space-between;font-weight:800;font-size:17px;color:#111;margin-top:8px;padding-top:8px;border-top:2px solid #222">
+              <span>TỔNG CỘNG:</span><span>${formatCurrency(total)}</span>
+            </div>
+          </div>
+
+          <!-- Note / extra -->
+          ${noteLine || vatInvLine ? `<div style="margin-top:8px;padding:6px 8px;background:#fffbeb;border-radius:6px;border:1px solid #fde68a">${noteLine}${vatInvLine}</div>` : ''}
+
+          <!-- Divider -->
+          <div style="border-top:1px dashed #ccc;margin:12px 0 8px"></div>
+
+          <!-- Footer -->
+          ${cfg.footer ? `<div style="text-align:center;font-size:11px;color:#666;margin-bottom:8px;font-style:italic">${_esc(cfg.footer)}</div>` : ''}
+          <div style="text-align:center;font-size:12px;color:#444;font-weight:600;margin-bottom:4px">Cảm ơn quý khách! Hẹn gặp lại 🙏</div>
+          <div style="text-align:center;font-size:10px;color:#aaa">In bởi NEO WAVE POS v9 · ${dateStr}</div>
+        </div>`;
       }
 
       function print(invoice) {
@@ -8825,7 +9092,6 @@
         if (!area) return;
         area.innerHTML = buildHTML(invoice);
         window.print();
-        // Auto print nếu được bật — gọi từ confirmPayment()
       }
 
       // ── Hiển thị preview trước khi in ────────────────────
@@ -8834,9 +9100,7 @@
       function showPreview(invoice) {
         _previewInvoice = invoice;
         const container = document.getElementById('invoice-preview-content');
-        if (container) {
-          container.innerHTML = buildHTML(invoice);
-        }
+        if (container) container.innerHTML = buildHTML(invoice);
         openModal('invoice-preview-modal');
         // Tự động in nếu cài đặt autoPrint bật
         if (window._v4InvoiceCfg?.autoPrint) {
@@ -8850,23 +9114,166 @@
         setTimeout(() => print(_previewInvoice), 200);
       }
 
+      // ── Lưu hóa đơn dạng ảnh ─────────────────────────────
+      async function saveAsImage(fromSharePanel) {
+        if (fromSharePanel) document.getElementById('invoice-share-panel').style.display = 'none';
+        const el = document.getElementById('invoice-render-root');
+        if (!el) { showWarning('Không tìm thấy nội dung hóa đơn'); return; }
+        if (typeof html2canvas === 'undefined') { showWarning('Thư viện ảnh chưa sẵn sàng, thử lại sau giây lát'); return; }
+        showInfo('Đang tạo ảnh hóa đơn...', 'Vui lòng chờ');
+        try {
+          const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2, useCORS: true, logging: false });
+          const dataURL = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          const invNo = (_previewInvoice?.no || 'hoadon').replace(/[^a-zA-Z0-9\-_]/g, '');
+          link.download = `HoaDon_${invNo}_${new Date().toISOString().slice(0,10)}.png`;
+          link.href = dataURL;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showSuccess('Đã lưu ảnh hóa đơn thành công!', '🖼️ Lưu ảnh');
+        } catch(err) {
+          showError('Không thể tạo ảnh: ' + err.message);
+        }
+      }
+
+      // ── Chia sẻ qua Web Share API ─────────────────────────
+      async function shareNative() {
+        document.getElementById('invoice-share-panel').style.display = 'none';
+        if (!_previewInvoice) return;
+        const inv = _previewInvoice;
+        const text = buildTextInvoice(inv);
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: `Hóa đơn ${inv.no}`, text });
+            return;
+          } catch(e) { /* user cancelled */ }
+        }
+        // Fallback: copy to clipboard
+        try {
+          await navigator.clipboard.writeText(text);
+          showSuccess('Đã sao chép hóa đơn vào clipboard!');
+        } catch(e) {
+          showWarning('Trình duyệt không hỗ trợ chia sẻ. Hãy dùng "Lưu Ảnh" để gửi qua Zalo.');
+        }
+      }
+
+      // ── Mở panel chia sẻ ─────────────────────────────────
+      function shareInvoice() {
+        const panel = document.getElementById('invoice-share-panel');
+        if (panel) { panel.style.display = 'flex'; panel.style.flexDirection = 'column'; panel.style.justifyContent = 'flex-end'; }
+      }
+
+      // ── Chia sẻ qua Zalo ─────────────────────────────────
+      function shareZalo() {
+        document.getElementById('invoice-share-panel').style.display = 'none';
+        if (!_previewInvoice) return;
+        const text = buildTextInvoice(_previewInvoice);
+        // Zalo Me deeplink
+        const encoded = encodeURIComponent(text);
+        // Try to open Zalo app deeplink first, fallback to web
+        const zaloUrl = `zalo://message?text=${encoded}`;
+        const fallbackUrl = `https://zalo.me`;
+        // Open in new tab — Zalo deeplink
+        const a = document.createElement('a');
+        a.href = zaloUrl;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        // Copy text to clipboard so user can paste in Zalo
+        navigator.clipboard?.writeText(text).then(() => {
+          showSuccess('Đã sao chép nội dung hóa đơn! Mở Zalo và dán vào chat với khách.', '💬 Zalo');
+        }).catch(() => {
+          showInfo('Mở Zalo và dán nội dung hóa đơn vào chat.');
+        });
+      }
+
+      // ── Sao chép văn bản hóa đơn ─────────────────────────
+      async function copyInvoiceText() {
+        document.getElementById('invoice-share-panel').style.display = 'none';
+        if (!_previewInvoice) return;
+        const text = buildTextInvoice(_previewInvoice);
+        try {
+          await navigator.clipboard.writeText(text);
+          showSuccess('Đã sao chép nội dung hóa đơn!', '📋 Sao chép');
+        } catch(e) {
+          showWarning('Không thể sao chép tự động. Hãy dùng Ctrl+C.');
+        }
+      }
+
+      // ── Tạo văn bản hóa đơn dạng text thuần ─────────────
+      function buildTextInvoice(inv) {
+        const info = window._v4StoreInfo || {};
+        const lines = [];
+        lines.push('═══════════════════════════════');
+        if (info.name) lines.push(`🏪 ${info.name}`);
+        if (info.address) lines.push(`📍 ${info.address}`);
+        if (info.phone) lines.push(`📞 ${info.phone}`);
+        lines.push('HÓA ĐƠN BÁN HÀNG');
+        lines.push('═══════════════════════════════');
+        lines.push(`Số HĐ : ${inv.no}`);
+        lines.push(`Ngày  : ${new Date(inv.date).toLocaleString('vi-VN')}`);
+        lines.push(`Khách : ${inv.customerName || 'Khách lẻ'}`);
+        if (inv.tableName) lines.push(`Bàn   : ${inv.tableName}`);
+        lines.push('───────────────────────────────');
+        (inv.items || []).forEach(i => {
+          const optsStr = i.opts && i.opts.length ? ` (${i.opts.join(', ')})` : '';
+          lines.push(`${i.name}${optsStr}`);
+          lines.push(`  ${i.qty} × ${formatCurrency(i.price)} = ${formatCurrency(i.price * i.qty)}`);
+          if (i.note) lines.push(`  📝 ${i.note}`);
+        });
+        lines.push('───────────────────────────────');
+        lines.push(`Tạm tính : ${formatCurrency(inv.subtotal || 0)}`);
+        if (inv.discount > 0) lines.push(`Giảm giá  : -${formatCurrency(inv.discount)}`);
+        if (inv.vatAmount > 0) lines.push(`VAT       : +${formatCurrency(inv.vatAmount)}`);
+        if (inv.voucherDiscount > 0) lines.push(`Voucher   : -${formatCurrency(inv.voucherDiscount)}`);
+        if (inv.loyaltyRedeemed > 0) lines.push(`Điểm TL   : -${formatCurrency(inv.loyaltyRedeemed)}`);
+        lines.push(`TỔNG CỘNG: ${formatCurrency(inv.total || 0)}`);
+        lines.push(`Thanh toán: ${inv.payMethod || '—'}`);
+        if (inv.note) lines.push(`Ghi chú: ${inv.note}`);
+        lines.push('═══════════════════════════════');
+        lines.push('Cảm ơn quý khách! Hẹn gặp lại 🙏');
+        if (info.website) lines.push(info.website);
+        return lines.join('\n');
+      }
+
       function printTestInvoice() {
         const testInv = {
           no: '#INV-TEST',
           date: new Date().toISOString(),
           customerName: 'Khách hàng mẫu',
           items: [
-            { name: 'Sản phẩm demo 1', qty: 2, price: 150000 },
-            { name: 'Sản phẩm demo 2', qty: 1, price: 300000 },
+            { name: 'Cà phê sữa', qty: 2, price: 45000, opts: ['Size L', 'Ít đường'], note: 'Thêm đá' },
+            { name: 'Bánh mì thịt', qty: 1, price: 35000, opts: [], note: '' },
           ],
-          subtotal: 600000, discount: 50000, total: 550000,
-          payMethod: 'Tiền mặt',
+          subtotal: 125000, discount: 10000, vatAmount: 11500, voucherDiscount: 0, loyaltyRedeemed: 0,
+          total: 126500, payMethod: 'Tiền mặt', createdBy: 'demo@example.com', note: 'Mang về',
         };
         showPreview(testInv);
         showInfo('Xem trước hóa đơn thử...');
       }
 
-      return { print, buildHTML, printTestInvoice, showPreview, printFromPreview };
+      // ── Xem hóa đơn từ lịch sử xuất kho / nhật ký ────────
+      function viewInvoiceByNo(invoiceNo) {
+        const inv = AppStore.invoices.find(i => i.no === invoiceNo || i.no === invoiceNo.trim());
+        if (!inv) {
+          showWarning(`Không tìm thấy hóa đơn ${invoiceNo} trong dữ liệu`);
+          return;
+        }
+        showPreview(inv);
+      }
+
+      function viewInvoiceById(invoiceId) {
+        const inv = AppStore.invoices.find(i => i.id === invoiceId);
+        if (!inv) { showWarning('Không tìm thấy hóa đơn'); return; }
+        showPreview(inv);
+      }
+
+      return { print, buildHTML, printTestInvoice, showPreview, printFromPreview,
+               saveAsImage, shareInvoice, shareZalo, shareNative, copyInvoiceText,
+               viewInvoiceByNo, viewInvoiceById, buildTextInvoice };
     })();
 
 
@@ -9275,6 +9682,12 @@
           localStorage.setItem(STORAGE_KEY, JSON.stringify(_tables));
           localStorage.setItem(ORDERS_KEY, JSON.stringify(_orders));
         } catch (e) { }
+        // ── Ghi state bàn lên Firestore ──────────────────────────
+        if (window.db && window._fbModules) {
+          const { doc: _doc, setDoc: _setDoc } = window._fbModules;
+          const state = { tables: _tables, orders: _orders, updatedAt: new Date().toISOString() };
+          _setDoc(_doc(window.db, 'tables', 'state'), state).catch(() => {});
+        }
       }
 
       function timeSince(iso) {
@@ -9489,6 +9902,13 @@
         getTableById(id) { return _tables.find(t => t.id === id); },
         getTables() { return _tables; },
         getOrders() { return _orders; },
+        // ── Được gọi bởi onSnapshot khi Firestore cập nhật ─────
+        _loadFromFirebase(tables, orders) {
+          _tables = tables;
+          _orders = orders;
+          if (document.querySelector('#page-tables.active')) this.render();
+          this.renderStats?.();
+        },
       };
     })();
 
@@ -10372,7 +10792,15 @@
             if (Cart.discountType === 'percent') return Math.round(sub * Cart.discountValue / 100);
             return Math.min(Cart.discountValue, sub);
           })();
-          const total = Math.max(0, sub - disc);
+          const afterDisc = Math.max(0, sub - disc);
+          const vatAmount = (() => {
+            if (!Cart.vatValue) return 0;
+            if (Cart.vatType === 'percent') return Math.round(afterDisc * Cart.vatValue / 100);
+            return Math.min(Cart.vatValue, afterDisc);
+          })();
+          const voucherDisc = Cart.voucherDiscount || 0;
+          const redeemDisc = Cart.redeemDiscount || 0;
+          const total = Math.max(0, afterDisc + vatAmount - voucherDisc - redeemDisc);
 
           // Deduct stock
           items.forEach(item => {
@@ -10398,15 +10826,42 @@
             discount: disc,
             discountType: Cart.discountType,
             discountValue: Cart.discountValue,
+            vatAmount,
+            vatValue: Cart.vatValue || 0,
+            vatType: Cart.vatType || 'percent',
+            voucherCode: Cart.voucherCode || '',
+            voucherDiscount: voucherDisc,
+            loyaltyRedeemed: redeemDisc,
+            needInvoice: Cart.needInvoice || false,
             total,
-            note: Cart.note || '',
+            note: Cart.note || document.getElementById('cart-note')?.value || '',
+            createdBy: window.currentUser?.email || 'demo',
+            role: window.currentRole,
+            tableName: Cart._tableName || '',
           };
 
           AppStore.invoices.unshift(invoice);
-          AppStore.exportHistory.unshift({ type: 'sale', invoiceNo: invNo, items: items.length, total, date: invoice.date });
+          // ── Ghi hóa đơn lên Firestore ─────────────────────────
+          if (db) {
+            try { setDoc(doc(db, 'invoices', invoice.id), invoice).catch(() => {}); } catch (_) { }
+          }
+          // ── Ghi export history lên Firestore ──────────────────
+          items.forEach(item => {
+            const expEntry = {
+              id: 'exp_' + Date.now() + '_' + item.id,
+              type: 'sale', invoiceNo: invNo,
+              productId: item.id, productName: item.name,
+              qty: item.qty, price: item.price, total: item.price * item.qty,
+              date: invoice.date, payMethod
+            };
+            AppStore.exportHistory.unshift(expEntry);
+            if (db) {
+              try { setDoc(doc(db, 'exportHistory', expEntry.id), expEntry).catch(() => {}); } catch (_) { }
+            }
+          });
           if (typeof saveInvoices === 'function') saveInvoices();
           if (typeof saveExportHistory === 'function') saveExportHistory();
-          logAction('sale', `Bán hàng ${invNo} — ${formatCurrency(total)} — ${payMethod}`);
+          logAction('sale', `Hóa đơn ${invNo} — ${formatCurrency(total)} — ${payMethod}`);
           if (customer) {
             const idx = AppStore.customers.findIndex(c => c.id === customerId);
             if (idx !== -1) {
@@ -10414,11 +10869,25 @@
               AppStore.customers[idx].totalOrders = (AppStore.customers[idx].totalOrders || 0) + 1;
             }
           }
+          // Voucher & loyalty
+          if (Cart.voucherCode && typeof VoucherSystem !== 'undefined') VoucherSystem.use(Cart.voucherCode);
+          if (redeemDisc > 0 && customerId && typeof LoyaltySystem !== 'undefined') {
+            const usePoints = Math.ceil(redeemDisc / (LoyaltySystem.REDEEM || 1000));
+            LoyaltySystem.redeemPoints(customerId, usePoints);
+          }
+          if (customerId && typeof LoyaltySystem !== 'undefined') {
+            const earned = LoyaltySystem.addPoints(customerId, total);
+            if (earned > 0) showInfo(`Khách hàng nhận +${earned} điểm tích lũy`, '⭐ Loyalty');
+          }
 
           if (typeof clearCart === 'function') clearCart();
           if (typeof updateDashboard === 'function') updateDashboard();
           if (typeof renderInventoryTable === 'function') renderInventoryTable(AppStore.products);
+          if (typeof renderHistoryTable === 'function') renderHistoryTable();
           closeModal('payment-modal');
+
+          // ── Hiện hóa đơn xem trước (bấm "In Bill" để in) ─────
+          setTimeout(() => { V4Print.showPreview(invoice); }, 300);
 
           const detail = items.map(i => `${esc(i.name)}${i.opts.length ? ' (' + i.opts.join(', ') + ')' : ''} × ${i.qty}`).join('<br>');
           showResultPopup({ type: 'success', title: `Thanh Toán Thành Công!`, message: `Hoá đơn ${invNo} — ${formatCurrency(total)}`, detail, duration: 3500 });
